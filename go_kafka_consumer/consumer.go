@@ -28,7 +28,7 @@ func main() {
     }
     defer c.Close()
 
-    fmt.Printf("Đã tạo Kafka consumer với bootstrap servers: %s\n", bootstrapServers)
+    fmt.Printf("created Kafka consumer with bootstrap servers: %s\n", bootstrapServers)
     c.SubscribeTopics([]string{"coin-data"}, nil)
     
     // S3/MinIO configuration from environment variables
@@ -57,12 +57,12 @@ func main() {
     }
     
     s3Client := s3.New(sess)
-    fmt.Printf("Đã kết nối đến S3/MinIO với bucket: %s\n", bucketName)
+    fmt.Printf("Connected sucessfully to S3/MinIO, bucket: %s\n", bucketName)
     
     timeout := 30 * time.Second
     
     // Poll messages from Kafka and write to S3/MinIO
-    fmt.Println("Bắt đầu tiêu thụ tin nhắn từ Kafka và lưu vào S3/MinIO...")
+    fmt.Println("Getting data from Kafka and write to S3/MinIO...")
     for {
         msg, err := c.ReadMessage(timeout)
         if err != nil {
@@ -91,7 +91,7 @@ func main() {
             continue
         }
         
-        fmt.Printf("Đã lưu tin nhắn %s vào S3/MinIO: %s\n", string(msg.Key), objectKey)
+        fmt.Printf("Saved %s to S3/MinIO: %s\n", string(msg.Key), objectKey)
     }
 }
 

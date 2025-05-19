@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y curl netcat-traditional dnsutils iputils-ping && \
     rm -rf /var/lib/apt/lists/*
 
-# copy source code
+# Copy source code
 COPY coinbase_kafka_producer/producer.py .
 COPY coinbase_kafka_producer/requirements.txt .
 

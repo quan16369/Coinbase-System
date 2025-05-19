@@ -39,9 +39,6 @@ schema = StructType([
     StructField("last_size", StringType(), True)
 ])
 
-# In thông tin kết nối để debug
-print(f"Cấu hình Kafka bootstrap servers: {kafka_servers}")
-
 # Đọc stream từ Kafka
 df = spark.readStream \
     .format("kafka") \
@@ -62,15 +59,6 @@ processed_df = json_df.select(
     col("price").cast("double").alias("price"),
     to_timestamp(col("time")).alias("time")
 ).where(col("type") == "ticker")
-
-# Hiển thị console để debug
-console_query = processed_df.writeStream \
-    .outputMode("append") \
-    .format("console") \
-    .option("truncate", "false") \
-    .start()
-
-print("Đã bắt đầu ghi dữ liệu vào Console...")
 
 # Đường dẫn checkpoint tương đối
 checkpoint_path = "/tmp/spark-checkpoint"
