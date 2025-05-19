@@ -8,7 +8,7 @@
 
 ## Architecture
 
-![architecture](https://i.imgur.com/w4dNGpx.png)
+![architecture]()
 
 The real-time data pipeline project facilitates the collection, processing, storage, and visualization of cryptocurrency market data from Coinbase. It comprises key components:
 
