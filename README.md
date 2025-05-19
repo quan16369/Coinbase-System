@@ -4,8 +4,7 @@
 
 ## Screenshot
 
-![plot](https://i.imgur.com/vSGW4js.png)
-
+![plot](https://i.imgur.com/arNNfss.png)
 ## Architecture
 
 ![architecture]()
