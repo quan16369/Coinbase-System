@@ -10,8 +10,8 @@ cassandra_host = os.environ.get("CASSANDRA_HOST", "cassandra")
 cassandra_port = os.environ.get("CASSANDRA_PORT", "9042")
 kafka_servers = f"{kafka_host}:{kafka_port}"
 
-print(f"Kết nối đến Kafka: {kafka_servers}")
-print(f"Kết nối đến Cassandra: {cassandra_host}:{cassandra_port}")
+print(f"Kafka connected successfully: {kafka_servers}")
+print(f"Cassandra connected successfully: {cassandra_host}:{cassandra_port}")
 
 # Tạo SparkSession
 spark = SparkSession.builder \
@@ -76,7 +76,7 @@ cassandra_query = processed_df.writeStream \
     .option("checkpointLocation", checkpoint_path) \
     .start()
 
-print("Đã bắt đầu ghi dữ liệu vào Cassandra...")
+print("Writing data to Cassandra...")
 
 # Chờ các query hoàn thành
 spark.streams.awaitAnyTermination()
