@@ -7,3 +7,5 @@ __pycache__/
 *.pyc
 Final.code-workspace
 model_producer.py
+cacandles_processor.Dockerfile
+candles_processor.py
