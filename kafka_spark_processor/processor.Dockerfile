@@ -2,7 +2,7 @@ FROM apache/spark:3.5.5-scala2.12-java17-python3-r-ubuntu
 
 USER root
 
-# Cài đặt một số công cụ cần thiết
+# Install required tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     netcat \
@@ -11,11 +11,11 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Tạo thư mục checkpoint
-RUN mkdir -p /tmp/spark-checkpoint && \
-    chmod 777 /tmp/spark-checkpoint
+# Create checkpoint directories
+RUN mkdir -p /tmp/spark-ticker-checkpoint /tmp/spark-ticker-candles-checkpoint && \
+    chmod 777 /tmp/spark-ticker-checkpoint /tmp/spark-ticker-candles-checkpoint
 
-# Sao chép ứng dụng Spark
+# Copy Spark processor application
 COPY kafka_spark_processor/spark_processor.py .
 
 # Tạo script khởi động tối ưu
@@ -59,7 +59,6 @@ until nc -z ${CASSANDRA_HOST:-cassandra} ${CASSANDRA_PORT:-9042} 2>/dev/null; do
 done \n\
 \n\
 echo "=== Khởi động ứng dụng Spark ===" \n\
-# Sử dụng đường dẫn đầy đủ cho spark-submit \n\
 $SPARK_SUBMIT \\\n\
   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5,org.apache.kafka:kafka-clients:3.9.0,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1 \\\n\
   --conf spark.cassandra.connection.host=${CASSANDRA_HOST:-cassandra} \\\n\

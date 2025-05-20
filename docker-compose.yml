@@ -57,6 +57,9 @@ services:
         echo 'Tạo topic coin-data...'
         kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic coin-data --partitions 3 --replication-factor 1
         echo 'Topic coin-data đã được tạo.'
+        echo 'Tạo topic coin-model-data...'
+        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic coin-model-data --partitions 3 --replication-factor 1
+        echo 'Topic coin-model đã được tạo.'
       "
     networks:
       - ie212_pipeline
@@ -107,11 +110,15 @@ services:
       bash -c "
         echo 'Waiting for Cassandra to be ready...'
         sleep 10
-        echo 'Creating keyspace...'
+        echo 'creating keyspace...'
         cqlsh cassandra -e \"CREATE KEYSPACE IF NOT EXISTS coinbase WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};\"
-        echo 'Creating table...'
+        echo 'creating prices table...'
         cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.prices (product_id TEXT, time TIMESTAMP, price DOUBLE, PRIMARY KEY (product_id, time));\"
-        echo 'Cassandra setup complete!'
+        echo 'prices table created!'
+        echo 'creating candles table...'
+        cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.candles ( product_id TEXT, start_time TIMESTAMP, end_time TIMESTAMP,open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume DOUBLE, candle_size TEXT, channel TEXT, PRIMARY KEY (product_id, start_time));\"
+        echo 'candles table created!'
+        echo 'cassandra setup complete!'
       "
     networks:
       - ie212_pipeline
@@ -180,12 +187,12 @@ services:
       - kafka-init
     environment:
       BOOTSTRAP_SERVERS: kafka:29092
-      # AWS_ENDPOINT: http://minio:9000 # Uncomment if using MinIO
-      AWS_REGION: ${AWS_REGION} # ap-southeast-1 if using MinIO
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} # minioadmin if using MinIO
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} # minioadmin if using MinIO
-      # AWS_S3_FORCE_PATH_STYLE: "true" # Uncomment if using MinIO
-      AWS_S3_BUCKET: ${S3_BUCKET} # Comment this line if using MinIO
+      AWS_ENDPOINT: http://minio:9000 # Uncomment if using MinIO
+      AWS_REGION: ap-southeast-1 # ap-southeast-1 if using MinIO
+      AWS_ACCESS_KEY_ID: minioadmin  # minioadmin if using MinIO
+      AWS_SECRET_ACCESS_KEY: minioadmin # minioadmin if using MinIO
+      AWS_S3_FORCE_PATH_STYLE: "true" # Uncomment if using MinIO
+      # AWS_S3_BUCKET: ${S3_BUCKET} # Comment this line if using MinIO
     networks:
       - ie212_pipeline
     restart: unless-stopped

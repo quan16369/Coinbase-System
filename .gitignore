@@ -6,3 +6,5 @@ test.py
 __pycache__/
 *.pyc
 Final.code-workspace
+model
+model_producer.py

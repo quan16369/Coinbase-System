@@ -32,38 +32,38 @@ WORKDIR /app
 
 COPY --from=builder /app/consumer .
 
-# Script khởi động
+# Startup script
 RUN echo '#!/bin/bash \n\
-# Kiểm tra biến môi trường \n\
-echo "=== Kiểm tra cấu hình ===" \n\
+# Check environment variables \n\
+echo "=== Configuration Check ===" \n\
 echo "Kafka Bootstrap Servers: ${BOOTSTRAP_SERVERS:-kafka:9092}" \n\
 echo "S3 Endpoint: ${AWS_ENDPOINT:-AWS S3}" \n\
 echo "S3 Bucket: ${S3_BUCKET:-ie212-coinbase-data}" \n\
 echo "AWS Region: ${AWS_REGION:-ap-southeast-1}" \n\
 \n\
-# Kiểm tra kết nối Kafka \n\
-echo "=== Kiểm tra kết nối Kafka ===" \n\
+# Check Kafka connection \n\
+echo "=== Checking Kafka Connection ===" \n\
 KAFKA_HOST=$(echo ${BOOTSTRAP_SERVERS:-kafka:9092} | cut -d: -f1) \n\
 KAFKA_PORT=$(echo ${BOOTSTRAP_SERVERS:-kafka:9092} | cut -d: -f2) \n\
-echo "Đang đợi Kafka tại $KAFKA_HOST:$KAFKA_PORT..." \n\
-timeout 60 bash -c "until nc -z $KAFKA_HOST $KAFKA_PORT 2>/dev/null; do echo \"Đang đợi Kafka khởi động...\"; sleep 5; done" \n\
+echo "Waiting for Kafka at $KAFKA_HOST:$KAFKA_PORT..." \n\
+timeout 60 bash -c "until nc -z $KAFKA_HOST $KAFKA_PORT 2>/dev/null; do echo \"Waiting for Kafka to start...\"; sleep 5; done" \n\
 if [ $? -ne 0 ]; then \n\
-  echo "CẢNH BÁO: Không thể kết nối đến Kafka sau 60 giây!" \n\
-  echo "Consumer có thể sẽ không hoạt động cho đến khi Kafka sẵn sàng." \n\
+  echo "WARNING: Could not connect to Kafka after 60 seconds!" \n\
+  echo "Consumer may not work until Kafka is ready." \n\
 fi \n\
 \n\
-# Kiểm tra kết nối MinIO/S3 \n\
+# Check MinIO/S3 connection \n\
 if [ ! -z "$AWS_ENDPOINT" ] && [[ "$AWS_ENDPOINT" != "AWS S3" ]]; then \n\
-  echo "=== Kiểm tra kết nối MinIO/S3 ===" \n\
-  # Phân tích URL để lấy host và port \n\
+  echo "=== Checking MinIO/S3 Connection ===" \n\
+  # Parse URL to get host and port \n\
   if [[ "$AWS_ENDPOINT" == http://* ]] || [[ "$AWS_ENDPOINT" == https://* ]]; then \n\
-    # Loại bỏ phần giao thức (http:// hoặc https://) \n\
+    # Remove protocol part (http:// or https://) \n\
     S3_URL=$(echo "$AWS_ENDPOINT" | sed -e "s|^[^/]*//||") \n\
-    # Phân tách host và port \n\
+    # Split host and port \n\
     S3_HOST=$(echo "$S3_URL" | cut -d: -f1) \n\
     S3_PORT=$(echo "$S3_URL" | cut -d: -f2) \n\
     \n\
-    # Set default port nếu không có port được chỉ định \n\
+    # Set default port if not specified \n\
     if [ "$S3_HOST" = "$S3_PORT" ]; then \n\
       if [[ "$AWS_ENDPOINT" == https://* ]]; then \n\
         S3_PORT=443 \n\
@@ -72,26 +72,26 @@ if [ ! -z "$AWS_ENDPOINT" ] && [[ "$AWS_ENDPOINT" != "AWS S3" ]]; then \n\
       fi \n\
     fi \n\
     \n\
-    # Loại bỏ đường dẫn sau host:port nếu có \n\
+    # Remove path after host:port if any \n\
     S3_PORT=$(echo "$S3_PORT" | cut -d/ -f1) \n\
     \n\
-    echo "Đang đợi MinIO/S3 tại $S3_HOST:$S3_PORT..." \n\
-    timeout 60 bash -c "until nc -z $S3_HOST $S3_PORT 2>/dev/null; do echo \"Đang đợi MinIO/S3 khởi động...\"; sleep 5; done" \n\
+    echo "Waiting for MinIO/S3 at $S3_HOST:$S3_PORT..." \n\
+    timeout 60 bash -c "until nc -z $S3_HOST $S3_PORT 2>/dev/null; do echo \"Waiting for MinIO/S3 to start...\"; sleep 5; done" \n\
     if [ $? -ne 0 ]; then \n\
-      echo "CẢNH BÁO: Không thể kết nối đến MinIO/S3 sau 60 giây!" \n\
-      echo "Consumer có thể sẽ không hoạt động đúng nếu không có kết nối S3." \n\
+      echo "WARNING: Could not connect to MinIO/S3 after 60 seconds!" \n\
+      echo "Consumer may not work properly without S3 connection." \n\
     else \n\
-      echo "Kết nối thành công đến MinIO/S3 tại $S3_HOST:$S3_PORT" \n\
+      echo "Successfully connected to MinIO/S3 at $S3_HOST:$S3_PORT" \n\
     fi \n\
   else \n\
-    echo "AWS_ENDPOINT không có định dạng http(s)://host:port, bỏ qua kiểm tra kết nối" \n\
+    echo "AWS_ENDPOINT not in http(s)://host:port format, skipping connection check" \n\
   fi \n\
 else \n\
-  echo "=== Bỏ qua kiểm tra kết nối MinIO/S3 ===" \n\
-  echo "Không tìm thấy biến AWS_ENDPOINT hoặc sử dụng AWS S3 mặc định" \n\
+  echo "=== Skipping MinIO/S3 Connection Check ===" \n\
+  echo "No AWS_ENDPOINT found or using default AWS S3" \n\
 fi \n\
 \n\
-echo "=== Khởi động Consumer ===" \n\
+echo "=== Starting Combined Consumer ===" \n\
 ./consumer' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
