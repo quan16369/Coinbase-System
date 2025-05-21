@@ -33,13 +33,12 @@ The data also flows into cryptocurrency predicting model from the Database, expe
 ![kubernetes-pods](https://i.imgur.com/LacnL5c.png)
 -->
 
-## CI/CD
+## How to use
 <p align="center">
   <img src="https://i.imgur.com/LU2iYUF.png" style="width: 600px"/>
 </p>
 
-This repository leverages GitHub Actions for automated CI/CD. Upon each code push to the main branch, Docker images are automatically built and pushed to Docker Hub. This ensures that the containers remain up to date and ready for deployment.
-
+Install Docker Desktop. After that, run: docker-compose up -d
 ## Future Work
 * Perform code cleanup and integration testing
 * Deploy to EKS
