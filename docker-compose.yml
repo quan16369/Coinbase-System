@@ -80,14 +80,38 @@ services:
       - ie212_pipeline
 
   # Cassandra setup database
+  # cassandra:
+  #   image: cassandra:latest
+  #   container_name: cassandra
+  #   ports:
+  #     - "9042:9042"
+  #   environment:
+  #     - CASSANDRA_CLUSTER_NAME=coinbase_cluster
+  #     - CASSANDRA_KEYSPACE=coinbase
+  #   volumes:
+  #     - cassandra-data:/var/lib/cassandra
+  #   networks:
+  #     - ie212_pipeline
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "nodetool status | grep -q '^UN'"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
+
+  # Cassandra setup database
   cassandra:
-    image: cassandra:latest
+    build:
+      context: ./cassandra
+      dockerfile: ./cassandra.Dockerfile
     container_name: cassandra
     ports:
       - "9042:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=coinbase_cluster
       - CASSANDRA_KEYSPACE=coinbase
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100M
     volumes:
       - cassandra-data:/var/lib/cassandra
     networks:
@@ -100,28 +124,32 @@ services:
       start_period: 30s
 
   # Cassandra setup - tạo keyspace và table
-  cassandra-setup:
-    image: cassandra:latest
-    container_name: cassandra-setup
-    depends_on:
-      cassandra:
-        condition: service_healthy
-    command: >
-      bash -c "
-        echo 'Waiting for Cassandra to be ready...'
-        sleep 10
-        echo 'creating keyspace...'
-        cqlsh cassandra -e \"CREATE KEYSPACE IF NOT EXISTS coinbase WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};\"
-        echo 'creating prices table...'
-        cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.prices (product_id TEXT, time TIMESTAMP, price DOUBLE, PRIMARY KEY (product_id, time));\"
-        echo 'prices table created!'
-        echo 'creating candles table...'
-        cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.candles ( product_id TEXT, start_time TIMESTAMP, end_time TIMESTAMP,open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume DOUBLE, candle_size TEXT, channel TEXT, PRIMARY KEY (product_id, start_time));\"
-        echo 'candles table created!'
-        echo 'cassandra setup complete!'
-      "
-    networks:
-      - ie212_pipeline
+  # cassandra-setup:
+  #   image: cassandra:latest
+  #   container_name: cassandra-setup
+  #   depends_on:
+  #     cassandra:
+  #       condition: service_healthy
+  #   command: >
+  #     bash -c "
+  #       echo 'Waiting for Cassandra to be ready...'
+  #       sleep 10
+  #       echo 'creating keyspace...'
+  #       cqlsh cassandra -e \"CREATE KEYSPACE IF NOT EXISTS coinbase WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};\"
+  #       echo 'creating prices table...'
+  #       cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.prices (product_id TEXT, time TIMESTAMP, price DOUBLE, PRIMARY KEY (product_id, time));\"
+  #       echo 'prices table created!'
+  #       echo 'creating candles table...'
+  #       cqlsh cassandra -e \"CREATE TABLE IF NOT EXISTS coinbase.candles ( product_id TEXT, start_time TIMESTAMP, end_time TIMESTAMP,open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume DOUBLE, candle_size TEXT, channel TEXT, PRIMARY KEY (product_id, start_time));\"
+  #       echo 'candles table created!'
+  #       echo 'cassandra setup complete!'
+  #       echo "Creating prediction table in Cassandra..."
+  #       cqlsh cassandra -e "CREATE TABLE IF NOT EXISTS coinbase.predictions (product_id TEXT, model_name TEXT, prediction_time TIMESTAMP, target_time TIMESTAMP, predicted_price DOUBLE, PRIMARY KEY ((product_id, model_name), prediction_time, target_time));\"
+  #       echo "Prediction table created!"
+  #       echo 'Cassandra setup complete!'
+  #     "
+  #   networks:
+  #     - ie212_pipeline
 
   # S3 compatible storage (MinIO)
   minio:
@@ -206,7 +234,6 @@ services:
     depends_on:
       - kafka
       - cassandra
-      - cassandra-setup
     environment:
       KAFKA_HOST: kafka
       KAFKA_PORT: 29092
@@ -215,7 +242,39 @@ services:
     networks:
       - ie212_pipeline
     restart: unless-stopped
-
+    
+  # Prediction service
+  price-predictor:
+    build:
+      context: .
+      dockerfile: ./prediction_real_time/prediction.Dockerfile
+    container_name: price-predictor
+    environment:
+      - CASSANDRA_HOSTS=cassandra
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_KEYSPACE=coinbase
+      - PRODUCT_IDS=BTC-USD,ETH-USD,XRP-USD
+      - PREDICTION_INTERVAL=5
+      - MODEL_CONFIG_PATH=/app/model/configs/train_config.yaml
+      - MODEL_CHECKPOINT_PATH=/app/model/checkpoints/best_epoch_16.pt
+      - ENABLE_HEALTH_CHECK=true
+    ports:
+      - "8000:8000"  # Health check port
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - ie212_pipeline
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - prediction-logs:/app/logs
+ 
   # Grafana for visualization
   grafana:
     build:
@@ -244,6 +303,7 @@ volumes:
   cassandra-data:
   minio-data:
   grafana-data:
+  prediction-logs:
 
 networks:
   ie212_pipeline:
