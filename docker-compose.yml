@@ -312,4 +312,4 @@ volumes:
 
 networks:
   ie212_pipeline:
-    driver: bridge
+    driver: bridge 

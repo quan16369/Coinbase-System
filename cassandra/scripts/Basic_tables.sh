@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS $CASSANDRA_KEYSPACE.prices (
     PRIMARY KEY (product_id, time)
 ) WITH CLUSTERING ORDER BY (time DESC);"
 
-# Create candles table
+# Create candles table:
 cqlsh -e "
 CREATE TABLE IF NOT EXISTS $CASSANDRA_KEYSPACE.candles (
     product_id TEXT,
