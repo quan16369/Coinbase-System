@@ -7,7 +7,7 @@
 ![plot](https://i.imgur.com/arNNfss.png)
 ## Architecture
 
-![architecture](![{AD7AE35E-EC1F-4F9B-8EF1-8655E2C71E7F} png](https://github.com/user-attachments/assets/4a08a193-8f50-4d1f-a1b4-93fc904ea557))
+(![{AD7AE35E-EC1F-4F9B-8EF1-8655E2C71E7F} png](https://github.com/user-attachments/assets/4a08a193-8f50-4d1f-a1b4-93fc904ea557))
 
 The real-time data pipeline project facilitates the collection, processing, storage, and visualization of cryptocurrency market data from Coinbase. It comprises key components:
 
