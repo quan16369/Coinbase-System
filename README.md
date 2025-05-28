@@ -44,3 +44,6 @@ Install Docker Desktop. After that, run: docker-compose up -d
 * Deploy to EKS
 * Add monitoring and logging tools
 * Perform more comprehensive analysis (like forecasting or sliding window avg)
+
+## Demo
+
