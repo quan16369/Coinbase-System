@@ -1,4 +1,4 @@
-# "IE212 Final: Real-Time Coinbase Data Pipeline for Advanced Cryptocurrency Price Forecasting"
+# "IE212 Final: Real-Time Coinbase Data Pipeline for Cryptocurrency Price Forecasting"
 
 ## Project Overview
 
